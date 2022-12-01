@@ -1,57 +1,59 @@
 package routines
 
-import "barkfetch/info"
-import "barkfetch/console"
+import (
+	"barkfetch/info"
+)
 
-var Routines = map[string]func(*console.Console){
-	"logo": func(c *console.Console) {
-		lastline := c.GetLastLine()
-		c.PushAt(0, c.GetLastLine(), info.GetLogo())
-		c.SetOffset(info.GetLogoMaxLength() + 1)
+var Routines = map[string]func() any{
+	"logo": func() any {
+		logo, err := info.GetLogo()
+		if err != nil {
+			panic(err)
+		}
 
-		c.SetLastLine(lastline)
+		return logo
 	},
-	"userline": func(c *console.Console) {
+	"userline": func() any {
 		userline, err := info.GetUserline()
 		if err != nil {
 			panic(err)
 		}
 
-		c.PushAt(0, c.GetLastLine(), userline)
+		return userline
 	},
-	"userunderline": func(c *console.Console) {
+	"userunderline": func() any {
 		underline, err := info.GetUserUnderline()
 		if err != nil {
 			panic(err)
 		}
 
-		c.PushAt(0, c.GetLastLine(), underline)
+		return underline
 	},
-	"kernel": func(c *console.Console) {
+	"kernel": func() any {
 		kernel, err := info.GetKernel()
 		if err != nil {
 			panic(err)
 		}
 
-		c.PushAt(0, c.GetLastLine(), kernel)
+		return kernel
 	},
-	"uptime": func(c *console.Console) {
+	"uptime": func() any {
 		uptime, err := info.GetUptime()
 		if err != nil {
 			panic(err)
 		}
 
-		c.PushAt(0, c.GetLastLine(), uptime)
+		return uptime
 	},
-	"shell": func(c *console.Console) {
-		c.PushAt(0, c.GetLastLine(), info.GetShell())
+	"shell": func() any {
+		return info.GetShell()
 	},
-	"memory": func(c *console.Console) {
+	"memory": func() any {
 		mem, err := info.GetMemory()
 		if err != nil {
 			panic(err)
 		}
 
-		c.PushAt(0, c.GetLastLine(), mem)
+		return mem
 	},
 }

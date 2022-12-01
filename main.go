@@ -2,43 +2,32 @@ package main
 
 import (
 	"barkfetch/config"
-	"barkfetch/console"
-	"barkfetch/info"
+	"barkfetch/logos"
 	"barkfetch/routines"
-	"barkfetch/utils"
+	"fmt"
+	"os"
+	"strings"
 )
 
 func main() {
-	_, width, err := utils.GetTerminalSize()
-	if err != nil {
-		panic(err)
-	}
-
-	var height int
-	var logoEnabled bool
-
+	var logo logos.Logo
+	var lines int
 	for _, opt := range config.Config {
-		if opt == "logo" {
-			logoEnabled = true
-			break
+		something := routines.Routines[opt]()
+
+		switch obj := something.(type) {
+		case logos.Logo:
+			logo = obj
+			logoText := os.Expand(logo.Logo, logos.ColorExpand)
+
+			fmt.Printf("%v%v", logoText, strings.Repeat("\x1b[F", logo.Lines-1))
+		default:
+			fmt.Printf("%v%v", fmt.Sprintf("\x1b[%vG", logo.MaxLength+2), obj.(string))
+			lines++
 		}
 	}
 
-	if !logoEnabled {
-		height = len(config.Config)
-	} else {
-		height = info.GetLogoLines()
-		if len(config.Config) > height {
-			height = len(config.Config)
-		}
+	if lines < logo.Lines {
+		fmt.Println(strings.Repeat("\n", logo.Lines-lines))
 	}
-
-	c := console.NewConsole(width, height)
-	c.Clear()
-
-	for _, opt := range config.Config {
-		routines.Routines[opt](&c)
-	}
-
-	c.Render()
 }

@@ -1,6 +1,7 @@
 package info
 
 import (
+	"barkfetch/logos"
 	"fmt"
 	"os"
 	"strings"
@@ -21,37 +22,32 @@ func GetUserline() (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("%v@%v\n", username, hostname), nil
+	status := fmt.Sprintf(
+		"${caccent}%v${creset}@${caccent}%v${creset}\n",
+		username,
+		hostname,
+	)
+
+	colored := os.Expand(status, logos.ColorExpand)
+
+	return colored, nil
 }
 
 func GetUserUnderline() (string, error) {
-	userline, err := GetUserline()
+	username := getUsername()
+	hostname, err := getHostname()
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("%v\n", strings.Repeat("=", len(userline))), nil
+	return fmt.Sprintf("%v\n", strings.Repeat("=", len(username)+len(hostname))), nil
 }
 
-func GetLogo() string {
-	return `  /\
- /  \
-/\/\/\`
-}
-
-func GetLogoLines() int {
-	return len(strings.Split(GetLogo(), "\n"))
-}
-
-func GetLogoMaxLength() int {
-	logo := GetLogo()
-
-	max := 0
-	for _, line := range strings.Split(logo, "\n") {
-		if len(line) > max {
-			max = len(line)
-		}
+func GetLogo() (logos.Logo, error) {
+	logo, err := logos.GuessLogo()
+	if err != nil {
+		return logos.Logo{}, err
 	}
 
-	return max
+	return logo, nil
 }

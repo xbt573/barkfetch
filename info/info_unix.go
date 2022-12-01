@@ -3,6 +3,7 @@
 package info
 
 import (
+	"barkfetch/logos"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -26,11 +27,15 @@ func GetKernel() (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf(
-		"Kernel: %v %v\n",
+	status := fmt.Sprintf(
+		"${caccent}Kernel${creset}: %v %v\n",
 		int8ToStr(uname.Sysname[:]),
 		int8ToStr(uname.Release[:]),
-	), nil
+	)
+
+	colored := os.Expand(status, logos.ColorExpand)
+
+	return colored, nil
 }
 
 func GetUptime() (string, error) {
@@ -40,11 +45,25 @@ func GetUptime() (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("Uptime: %v minutes\n", int(sysinfo.Uptime/60)), nil
+	status := fmt.Sprintf(
+		"${caccent}Uptime${creset}: %v minutes\n",
+		int(sysinfo.Uptime/60),
+	)
+
+	colored := os.Expand(status, logos.ColorExpand)
+
+	return colored, nil
 }
 
 func GetShell() string {
-	return fmt.Sprintf("Shell: %v\n", filepath.Base(os.Getenv("SHELL")))
+	status := fmt.Sprintf(
+		"${caccent}Shell${creset}: %v\n",
+		filepath.Base(os.Getenv("SHELL")),
+	)
+
+	colored := os.Expand(status, logos.ColorExpand)
+
+	return colored
 }
 
 func GetMemory() (string, error) {
@@ -54,9 +73,13 @@ func GetMemory() (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf(
-		"Memory: %v/%v MB",
-		int((sysinfo.Totalram-sysinfo.Freeram)/1000000),
-		int(sysinfo.Totalram/1000000),
-	), nil
+	status := fmt.Sprintf(
+		"${caccent}Memory${creset}: %v/%v MiB\n",
+		int((sysinfo.Totalram-sysinfo.Freeram)*uint64(sysinfo.Unit)/1000000),
+		int(sysinfo.Totalram*uint64(sysinfo.Unit)/1000000),
+	)
+
+	colored := os.Expand(status, logos.ColorExpand)
+
+	return colored, nil
 }
