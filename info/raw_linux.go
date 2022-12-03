@@ -15,7 +15,7 @@ import (
 var (
 	getTotalMemRegex     = regexp.MustCompile(`MemTotal:\s+(\d+) kB`)
 	getAvailableMemRegex = regexp.MustCompile(`MemAvailable:\s+(\d+) kB`)
-	getIdRegex           = regexp.MustCompile(`(?m)^ID=\"(.*)\"$`)
+	getIdRegex           = regexp.MustCompile(`(?m)^ID=\"*(.*)\"*$`)
 )
 
 // Convert array of int8 to string
