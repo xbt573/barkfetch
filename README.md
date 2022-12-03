@@ -1,6 +1,8 @@
 # barkfetch
 Barkfetch is an alternative to "neofetch", written in Go. Currently in very alpha.
 
+![Barkfetch demonstration](.github/screenshot.png)
+
 # How to build
 1. Clone repo and cd into it
 ```bash
