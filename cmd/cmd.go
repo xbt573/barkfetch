@@ -75,7 +75,7 @@ func Run() error {
 		return err
 	}
 
-	// "logo", "userline", "userunderline", "kernel", "uptime", "shell", "memory"
+	// "logo", "userline", "userunderline", "os", "kernel", "uptime", "shell", "memory"
 	sysinfo, err := info.GetInfoString(config)
 
 	if err != nil {
