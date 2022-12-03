@@ -12,6 +12,7 @@ import (
 // Config not found error
 var ErrConfigNotFound = errors.New("not found config")
 
+// Load config and return map of options
 func loadConfig() (map[string]string, error) {
 	f, err := os.Open("./barkfetch.config")
 	if err == nil {
@@ -42,6 +43,7 @@ configChosed:
 	return parseConfig(contents), nil
 }
 
+// Parse simple config
 func parseConfig(config string) map[string]string {
 	options := make(map[string]string)
 
@@ -66,6 +68,7 @@ func parseConfig(config string) map[string]string {
 	return options
 }
 
+// Run cmd-related stuff and return non-nil error if something is wrong
 func Run() error {
 	config, err := loadConfig()
 	if err != nil {
