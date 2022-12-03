@@ -8,11 +8,11 @@ import (
 )
 
 // Possible options, to make output sorted independent of config/cmd
-var possibleOptions = []string{"logo", "userline", "userunderline", "kernel",
-	"uptime", "shell", "memory"}
+var possibleOptions = []string{"logo", "userline", "userunderline", "os",
+	"kernel", "uptime", "shell", "memory"}
 
 // Regexp matching empty lines, useful to make output more pretty
-var emptyLinesRegex = regexp.MustCompile(`\n$`)
+var emptyLinesRegex = regexp.MustCompile(`(?m)\n$`)
 
 // Helper function, chains fmt.Sprintf and os.Expand(..., ColorExpand)
 func formatAndColor(format string, args ...any) string {
@@ -85,6 +85,22 @@ func GetInfoString(options map[string]string) (string, error) {
 			)
 			lines++
 
+		case "os":
+			os, err := getRawPrettyName()
+			if err != nil {
+				return "", err
+			}
+
+			arch := getRawArchitecture()
+
+			output += formatAndColor(
+				"\x1b[%vG${caccent}OS${creset}: %v %v\n",
+				offset,
+				os,
+				arch,
+			)
+			lines++
+
 		case "kernel":
 			kernel, err := getRawKernel()
 			if err != nil {
@@ -104,12 +120,51 @@ func GetInfoString(options map[string]string) (string, error) {
 				return "", err
 			}
 
-			output += formatAndColor(
-				"\x1b[%vG${caccent}Uptime${creset}: %v minutes\n",
-				offset,
-				int(uptime/60),
-			)
+			if uptime <= 60 {
+				output += formatAndColor(
+					"\x1b[%vG${caccent}Uptime${creset}: %v s\n",
+					offset,
+					int(uptime),
+				)
+			}
+
+			if uptime <= 3600 {
+				output += formatAndColor(
+					"\x1b[%vG${caccent}Uptime${creset}: %v m, %v s\n",
+					offset,
+					int(uptime/60),
+					int(uptime%60),
+				)
+			}
+
+			if uptime <= 86400 {
+				output += formatAndColor(
+					"\x1b[%vG${caccent}Uptime${creset}: %v h, %v m, %v s\n",
+					offset,
+					int(uptime/3600),
+					int((uptime%3600)/60),
+					int((uptime%3600)%60),
+				)
+			}
+
+			if uptime > 86400 {
+				output += formatAndColor(
+					"\x1b[%vG${caccent}Uptime${creset}: %v d, %v h, %v m, %v s\n",
+					offset,
+					int(uptime/86400),
+					int(uptime%86400),
+					int((uptime%86400)%3600),
+					int(((uptime%86400)%3600)%60),
+				)
+			}
+
 			lines++
+			// output += formatAndColor(
+			// 	"\x1b[%vG${caccent}Uptime${creset}: %v minutes\n",
+			// 	offset,
+			// 	int(uptime/60),
+			// )
+			// lines++
 
 		case "shell":
 			shell := getRawShell()
@@ -128,10 +183,11 @@ func GetInfoString(options map[string]string) (string, error) {
 			}
 
 			output += formatAndColor(
-				"\x1b[%vG${caccent}Memory${creset}: %v / %v Mb\n",
+				"\x1b[%vG${caccent}Memory${creset}: %v / %v Mb (%v%%)\n",
 				offset,
 				used,
 				total,
+				int(float32(used)/float32(total)*100.0),
 			)
 			lines++
 		}

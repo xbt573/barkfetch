@@ -15,7 +15,8 @@ import (
 var (
 	getTotalMemRegex     = regexp.MustCompile(`MemTotal:\s+(\d+) kB`)
 	getAvailableMemRegex = regexp.MustCompile(`MemAvailable:\s+(\d+) kB`)
-	getIdRegex           = regexp.MustCompile(`(?m)^ID=\"*(.*)\"*$`)
+	getIdRegex           = regexp.MustCompile(`(?m)^ID=\"*([^\"]+)\"*$`)
+	getPrettyNameRegex   = regexp.MustCompile(`(?m)^PRETTY_NAME=\"*([^\"]+)\"*$`)
 )
 
 // Convert array of int8 to string
@@ -89,6 +90,24 @@ func getRawMemory() (used, total int, err error) {
 	used = (totalMem - availableMem) / 1024
 
 	return
+}
+
+// Returns OS pretty name
+func getRawPrettyName() (string, error) {
+	f, err := os.Open("/etc/os-release")
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	raw, err := io.ReadAll(f)
+	if err != nil {
+		return "", err
+	}
+
+	contents := string(raw)
+	match := getPrettyNameRegex.FindStringSubmatch(contents)
+	return match[1], nil
 }
 
 // Guesses distro by /etc/os-release values

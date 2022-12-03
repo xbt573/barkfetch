@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"os"
 	"regexp"
+	"runtime"
 	"strings"
 )
 
@@ -24,6 +25,12 @@ func getRawHostname() (string, error) {
 	return os.Hostname()
 }
 
+// Gets OS architecture
+func getRawArchitecture() string {
+	return runtime.GOARCH
+}
+
+// Logos
 var (
 	//go:embed logos/default.txt
 	_default string
@@ -33,6 +40,42 @@ var (
 
 	//go:embed logos/gentoo.txt
 	_gentoo string
+
+	//go:embed logos/arch.txt
+	_arch string
+
+	//go:embed logos/linuxmint.txt
+	_linuxmint string
+
+	//go:embed logos/manjaro.txt
+	_manjaro string
+
+	//go:embed logos/mxlinux.txt
+	_mxlinux string
+
+	//go:embed logos/nixos.txt
+	_nixos string
+
+	//go:embed logos/opensuse.txt
+	_opensuse string
+
+	//go:embed logos/parabola.txt
+	_parabola string
+
+	//go:embed logos/popos.txt
+	_popos string
+
+	//go:embed logos/postmarketos.txt
+	_postmarketos string
+
+	//go:embed logos/pureos.txt
+	_pureos string
+
+	//go:embed logos/slackware.txt
+	_slackware string
+
+	//go:embed logos/ubuntu.txt
+	_ubuntu string
 )
 
 // Returns distro logo by name, or guesses if arg is "auto"
@@ -49,6 +92,48 @@ func getLogo(distro string) (Logo, error) {
 
 	case "gentoo":
 		logoText = _gentoo
+
+	case "arch":
+		logoText = _arch
+
+	case "linuxmint":
+		logoText = _linuxmint
+
+	case "manjaro":
+		logoText = _manjaro
+
+	case "mxlinux":
+		logoText = _mxlinux
+
+	case "nixos":
+		logoText = _nixos
+
+	case "opensuse":
+		logoText = _opensuse
+
+	case "suse":
+		logoText = _opensuse
+
+	case "parabola":
+		logoText = _parabola
+
+	case "pop-os":
+		logoText = _popos
+
+	case "popos":
+		logoText = _popos
+
+	case "postmarketos":
+		logoText = _postmarketos
+
+	case "pureos":
+		logoText = _pureos
+
+	case "slackware":
+		logoText = _slackware
+
+	case "ubuntu":
+		logoText = _ubuntu
 
 	default:
 		logoText = _default
