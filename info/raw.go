@@ -1,6 +1,7 @@
 package info
 
 import (
+	_ "embed"
 	"os"
 	"regexp"
 	"strings"
@@ -23,32 +24,56 @@ func getRawHostname() (string, error) {
 	return os.Hostname()
 }
 
+var (
+	//go:embed logos/default.txt
+	_default string
+
+	//go:embed logos/void.txt
+	_void string
+
+	//go:embed logos/gentoo.txt
+	_gentoo string
+)
+
 // Returns distro logo by name, or guesses if arg is "auto"
-// Currently return default logo, unimplemented
+// Currently return small count of logos, mostly default
 func getLogo(distro string) (Logo, error) {
-	text := `#accent c2
-${c2}  /\
- /  \
-/\/\/\${creset}`
-	directiveFreeText := replaceDirectivesRegexp.ReplaceAllString(text, "")
+	logoText := ""
+
+	switch distro {
+	case "auto":
+		return getLogo(guessDistro())
+
+	case "void":
+		logoText = _void
+
+	case "gentoo":
+		logoText = _gentoo
+
+	default:
+		logoText = _default
+	}
 
 	var logo Logo
 
-	match := getLogoRegexp.FindStringSubmatch(text)
+	match := getLogoRegexp.FindStringSubmatch(logoText)
 	logo.Logo = match[1]
-	logo.Lines = len(strings.Split(directiveFreeText, "\n"))
+
+	match = getAccentRegexp.FindStringSubmatch(logoText)
+	logo.AccentColor = match[1]
+
+	directiveFreeLogoText := replaceDirectivesRegexp.ReplaceAllString(logoText, "")
+	logo.Lines = len(strings.Split(directiveFreeLogoText, "\n"))
 
 	max := 0
-	for _, line := range strings.Split(directiveFreeText, "\n") {
+
+	for _, line := range strings.Split(directiveFreeLogoText, "\n") {
 		if len(line) > max {
 			max = len(line)
 		}
 	}
 
 	logo.MaxLength = max
-
-	match = getAccentRegexp.FindStringSubmatch(text)
-	logo.AccentColor = match[1]
 
 	return logo, nil
 }

@@ -1,0 +1,8 @@
+#accent c2
+    ${c2}____ 
+  'pfPfp.%
+//  _._  \\
+UU |===| UU
+\\  ^~^  //
+ `0PpppP'
+   `````${creset}

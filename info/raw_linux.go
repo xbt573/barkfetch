@@ -15,6 +15,7 @@ import (
 var (
 	getTotalMemRegex     = regexp.MustCompile(`MemTotal:\s+(\d+) kB`)
 	getAvailableMemRegex = regexp.MustCompile(`MemAvailable:\s+(\d+) kB`)
+	getIdRegex           = regexp.MustCompile(`(?m)^ID=\"(.*)\"$`)
 )
 
 // Convert array of int8 to string
@@ -88,4 +89,23 @@ func getRawMemory() (used, total int, err error) {
 	used = (totalMem - availableMem) / 1024
 
 	return
+}
+
+// Guesses distro by /etc/os-release values
+func guessDistro() string {
+	f, err := os.Open("/etc/os-release")
+	if err != nil {
+		return ""
+	}
+	defer f.Close()
+
+	raw, err := io.ReadAll(f)
+	if err != nil {
+		return ""
+	}
+
+	contents := string(raw)
+	match := getIdRegex.FindStringSubmatch(contents)
+
+	return match[1]
 }
