@@ -10,9 +10,9 @@ import (
 
 // Useful regexes
 var (
-	replaceDirectivesRegexp = regexp.MustCompile(`(?:#accent c\d{1,2}\n|\$\{c(?:\d{1,2}|reset)\})`)
-	getAccentRegexp         = regexp.MustCompile(`#accent (c\d{1,2})`)
-	getLogoRegexp           = regexp.MustCompile(`#accent c\d{1,2}\n([\S\s]*)`)
+	replaceDirectivesRegex = regexp.MustCompile(`(?:#accent c\d{1,2}\n|\$\{c(?:\d{1,2}|reset)\})`)
+	getAccentRegex         = regexp.MustCompile(`#accent (c\d{1,2})`)
+	getLogoRegex           = regexp.MustCompile(`#accent c\d{1,2}\n([\S\s]*)`)
 )
 
 // Gets username from program environment
@@ -141,13 +141,13 @@ func getLogo(distro string) (Logo, error) {
 
 	var logo Logo
 
-	match := getLogoRegexp.FindStringSubmatch(logoText)
+	match := getLogoRegex.FindStringSubmatch(logoText)
 	logo.Logo = match[1]
 
-	match = getAccentRegexp.FindStringSubmatch(logoText)
+	match = getAccentRegex.FindStringSubmatch(logoText)
 	logo.AccentColor = match[1]
 
-	directiveFreeLogoText := replaceDirectivesRegexp.ReplaceAllString(logoText, "")
+	directiveFreeLogoText := replaceDirectivesRegex.ReplaceAllString(logoText, "")
 	logo.Lines = len(strings.Split(directiveFreeLogoText, "\n"))
 
 	max := 0
