@@ -128,7 +128,7 @@ func GetInfoString(options map[string]string) (string, error) {
 				)
 			}
 
-			if uptime <= 3600 {
+			if uptime > 60 && uptime <= 3600 {
 				output += formatAndColor(
 					"\x1b[%vG${caccent}Uptime${creset}: %v m, %v s\n",
 					offset,
@@ -137,7 +137,7 @@ func GetInfoString(options map[string]string) (string, error) {
 				)
 			}
 
-			if uptime <= 86400 {
+			if uptime > 3600 && uptime <= 86400 {
 				output += formatAndColor(
 					"\x1b[%vG${caccent}Uptime${creset}: %v h, %v m, %v s\n",
 					offset,
@@ -193,10 +193,12 @@ func GetInfoString(options map[string]string) (string, error) {
 		}
 	}
 
+	output = emptyLinesRegex.ReplaceAllString(output, "")
+
 	if lines < logolines {
-		output += strings.Repeat("\n", logolines-lines)
+		output += strings.Repeat("\n", logolines-lines-1)
 	}
 
-	// return output, nil
-	return emptyLinesRegex.ReplaceAllString(output, ""), nil
+	return output, nil
+	// return emptyLinesRegex.ReplaceAllString(output, ""), nil
 }
