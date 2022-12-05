@@ -152,8 +152,8 @@ func GetInfoString(options map[string]string) (string, error) {
 					"\x1b[%vG${caccent}Uptime${creset}: %v d, %v h, %v m, %v s\n",
 					offset,
 					int(uptime/86400),
-					int(uptime%86400),
-					int((uptime%86400)%3600),
+					int((uptime%86400)/3600),
+					int(((uptime%86400)%3600)/60),
 					int(((uptime%86400)%3600)%60),
 				)
 			}
@@ -193,10 +193,12 @@ func GetInfoString(options map[string]string) (string, error) {
 		}
 	}
 
+	os.WriteFile("debug", []byte(output), os.ModePerm)
 	output = emptyLinesRegex.ReplaceAllString(output, "")
+	os.WriteFile("debug2", []byte(output), os.ModePerm)
 
 	if lines < logolines {
-		output += strings.Repeat("\n", logolines-lines-1)
+		output += strings.Repeat("\n", logolines-lines)
 	}
 
 	return output, nil
