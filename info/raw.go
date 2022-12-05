@@ -76,6 +76,9 @@ var (
 
 	//go:embed logos/ubuntu.txt
 	_ubuntu string
+
+	//go:embed logos/mac.txt
+	_mac string
 )
 
 // Returns distro logo by name, or guesses if arg is "auto"
@@ -134,6 +137,9 @@ func getLogo(distro string) (Logo, error) {
 
 	case "ubuntu":
 		logoText = _ubuntu
+
+	case "mac":
+		logoText = _mac
 
 	default:
 		logoText = _default
