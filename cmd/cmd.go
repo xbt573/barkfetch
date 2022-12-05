@@ -19,7 +19,7 @@ func loadConfig() (map[string]string, error) {
 		goto configChosed
 	}
 
-	f, err = os.Open("~/.config/barkfetch")
+	f, err = os.Open(os.ExpandEnv("$HOME/.config/barkfetch/config"))
 	if err == nil {
 		goto configChosed
 	}
