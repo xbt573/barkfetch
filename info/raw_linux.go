@@ -14,9 +14,14 @@ import (
 // Regexes used for extraction memory info from /proc/meminfo
 var (
 	getTotalMemRegex     = regexp.MustCompile(`MemTotal:\s+(\d+) kB`)
+	getFreeMemRegex      = regexp.MustCompile(`MemFree:\s+(\d+) kB`)
 	getAvailableMemRegex = regexp.MustCompile(`MemAvailable:\s+(\d+) kB`)
-	getIdRegex           = regexp.MustCompile(`(?m)^ID=\"*([^\"]+)\"*$`)
-	getPrettyNameRegex   = regexp.MustCompile(`(?m)^PRETTY_NAME=\"*([^\"]+)\"*$`)
+	getShMemRegex        = regexp.MustCompile(`Shmem:\s+(\d+) kB`)
+	getBuffersRegex      = regexp.MustCompile(`Buffers:\s+(\d+) kB`)
+	getCachedRegex       = regexp.MustCompile(`Cached:\s+(\d+) kB`)
+	getSReclaimableRegex = regexp.MustCompile(`SReclaimable:\s+(\d+) kB`)
+	getIdRegex           = regexp.MustCompile(`(?m)^ID=\"?([^\"]*?)\"?$`)
+	getPrettyNameRegex   = regexp.MustCompile(`(?m)^PRETTY_NAME=\"?([^\"]*?)\"?$`)
 )
 
 // Convert array of int8 to string
@@ -80,14 +85,44 @@ func getRawMemory() (used, total int, err error) {
 		return
 	}
 
-	match = getAvailableMemRegex.FindStringSubmatch(contents)
-	availableMem, err := strconv.Atoi(match[1])
+	match = getShMemRegex.FindStringSubmatch(contents)
+	shMem, err := strconv.Atoi(match[1])
 	if err != nil {
 		return
 	}
 
-	total = totalMem / 1024
-	used = (totalMem - availableMem) / 1024
+	match = getFreeMemRegex.FindStringSubmatch(contents)
+	freeMem, err := strconv.Atoi(match[1])
+	if err != nil {
+		return
+	}
+
+	match = getBuffersRegex.FindStringSubmatch(contents)
+	buffers, err := strconv.Atoi(match[1])
+	if err != nil {
+		return
+	}
+
+	match = getCachedRegex.FindStringSubmatch(contents)
+	cached, err := strconv.Atoi(match[1])
+	if err != nil {
+		return
+	}
+
+	match = getSReclaimableRegex.FindStringSubmatch(contents)
+	sReclaimable, err := strconv.Atoi(match[1])
+	if err != nil {
+		return
+	}
+
+	// match = getAvailableMemRegex.FindStringSubmatch(contents)
+	// availableMem, err := strconv.Atoi(match[1])
+	// if err != nil {
+	// 	return
+	// }
+
+	total = totalMem / 1000
+	used = (totalMem + shMem - freeMem - buffers - cached - sReclaimable) / 1000
 
 	return
 }

@@ -193,9 +193,7 @@ func GetInfoString(options map[string]string) (string, error) {
 		}
 	}
 
-	os.WriteFile("debug", []byte(output), os.ModePerm)
 	output = emptyLinesRegex.ReplaceAllString(output, "")
-	os.WriteFile("debug2", []byte(output), os.ModePerm)
 
 	if lines < logolines {
 		output += strings.Repeat("\n", logolines-lines)
