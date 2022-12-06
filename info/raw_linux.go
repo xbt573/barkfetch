@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 	"syscall"
 )
 
@@ -33,8 +34,7 @@ var getRawGpuManufacturerAndModelRegex = regexp.MustCompile(`.*"(?:Display|3D|VG
 
 // Regexes used to extract pretty GPU manufacturer and model from raw input
 var (
-	getGpuManufacturerRegex = regexp.MustCompile(`(?:(NVIDIA) .*|.*\[(.*)\])`)
-	getGpuModelRegex        = regexp.MustCompile(`.*\[(.*)\]`)
+	getGpuModelRegex = regexp.MustCompile(`.*\[(.*)\]`)
 )
 
 // Regex used to remove too much spaces between words
@@ -173,11 +173,16 @@ func getRawGpu() (string, error) {
 	contents := string(out)
 	match := getRawGpuManufacturerAndModelRegex.FindStringSubmatch(contents)
 
-	manufacturerMatch := getGpuManufacturerRegex.FindStringSubmatch(match[1])
-	if manufacturerMatch[1] == "" {
-		manufacturer = manufacturerMatch[2]
-	} else {
-		manufacturer = manufacturerMatch[1]
+	if strings.Index(match[1], "Intel") != -1 {
+		manufacturer = "Intel"
+	}
+
+	if strings.Index(match[1], "NVIDIA") != -1 {
+		manufacturer = "NVIDIA"
+	}
+
+	if strings.Index(match[1], "AMD") != -1 {
+		manufacturer = "AMD"
 	}
 
 	modelMatch := getGpuModelRegex.FindStringSubmatch(match[2])
