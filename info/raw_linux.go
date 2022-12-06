@@ -40,8 +40,8 @@ var (
 // Regex used to remove too much spaces between words
 var removeExtraSpacesRegex = regexp.MustCompile(`\s+`)
 
-// Convert array of int8 to string
-func int8ToStr(arr []int8) string {
+// Convert array of (u)int8 to string
+func int8ToStr(arr []int) string {
 	b := make([]byte, 0, len(arr))
 	for _, v := range arr {
 		if v == 0x00 {
@@ -61,11 +61,17 @@ func getRawKernel() (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("Linux %v", int8ToStr(info.Release[:])), nil
+	intArr := []int{}
+
+	for _, val := range info.Release {
+		intArr = append(intArr, int(val))
+	}
+
+	return fmt.Sprintf("Linux %v", int8ToStr(intArr)), nil
 }
 
 // Returns system uptime in seconds
-func getRawUptime() (int64, error) {
+func getRawUptime() (int, error) {
 	var info syscall.Sysinfo_t
 
 	err := syscall.Sysinfo(&info)
@@ -73,7 +79,7 @@ func getRawUptime() (int64, error) {
 		return -1, err
 	}
 
-	return info.Uptime, nil
+	return int(info.Uptime), nil
 }
 
 // Returns used shell
