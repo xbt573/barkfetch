@@ -158,6 +158,11 @@ func getRawCpu() (string, error) {
 
 	contents := string(raw)
 	match := getCpuModelRegex.FindStringSubmatch(contents)
+
+	if len(match) == 1 {
+		return "n/a", nil
+	}
+
 	return removeExtraSpacesRegex.ReplaceAllString(match[1], " "), nil
 }
 
