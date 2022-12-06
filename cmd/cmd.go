@@ -23,6 +23,7 @@ var (
 	_uptime        = flag.Bool("uptime", true, "Display system uptime")
 	_shell         = flag.Bool("shell", true, "Display current shell")
 	_cpu           = flag.Bool("cpu", true, "Display CPU model")
+	_gpu           = flag.Bool("gpu", true, "Display GPU manufacturer and model")
 	_memory        = flag.Bool("memory", true, "Display used and total memory in megabytes")
 )
 
@@ -107,6 +108,10 @@ configChosed:
 
 	if isFlagPassed("cpu") {
 		config["cpu"] = boolToString(*_cpu)
+	}
+
+	if isFlagPassed("gpu") {
+		config["gpu"] = boolToString(*_gpu)
 	}
 
 	if isFlagPassed("memory") {

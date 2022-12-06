@@ -29,7 +29,7 @@ var (
 var getCpuModelRegex = regexp.MustCompile(`(?m)^model name\s+: (.*)$`)
 
 // Regex used to extract GPU manufacturer and model from "lspci" output
-var getGpuManufacturerAndModel = regexp.MustCompile(`.*"(?:Display|3D|VGA).*?" "(.*?)" ".*?\[(.*?)\]"`)
+var getGpuManufacturerAndModel = regexp.MustCompile(`.*"(?:Display|3D|VGA).*?" ".*?\[(.*)\]" ".*?\[(.*?)\]"`)
 
 // Regex used to remove too much spaces between words
 var removeExtraSpacesRegex = regexp.MustCompile(`\s+`)
@@ -153,6 +153,18 @@ func getRawCpu() (string, error) {
 	contents := string(raw)
 	match := getCpuModelRegex.FindStringSubmatch(contents)
 	return removeExtraSpacesRegex.ReplaceAllString(match[1], " "), nil
+}
+
+// Returns GPU manufacturer and model
+func getRawGpu() (string, error) {
+	out, err := exec.Command("lspci", "-mm").Output()
+	if err != nil {
+		return "", err
+	}
+
+	contents := string(out)
+	match := getGpuManufacturerAndModel.FindStringSubmatch(contents)
+	return fmt.Sprintf("%v %v", match[1], match[2]), nil
 }
 
 // Returns OS pretty name
