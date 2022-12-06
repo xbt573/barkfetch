@@ -28,8 +28,14 @@ var (
 // Regex used to extract CPU model from /proc/cpuinfo
 var getCpuModelRegex = regexp.MustCompile(`(?m)^model name\s+: (.*)$`)
 
-// Regex used to extract GPU manufacturer and model from "lspci" output
-var getGpuManufacturerAndModel = regexp.MustCompile(`.*"(?:Display|3D|VGA).*?" "(?:(NVIDIA).*|.*?\[(.*)\])" ".*?\[(.*?)\]"`)
+// Regex used to extract raw GPU manufacturer and model from "lspci" output
+var getRawGpuManufacturerAndModelRegex = regexp.MustCompile(`.*"(?:Display|3D|VGA).*?" "(.*?)" "(.*?)"`)
+
+// Regexes used to extract pretty GPU manufacturer and model from raw input
+var (
+	getGpuManufacturerRegex = regexp.MustCompile(`(?:(NVIDIA) .*|.*\[(.*)\])`)
+	getGpuModelRegex        = regexp.MustCompile(`.*\[(.*)\]`)
+)
 
 // Regex used to remove too much spaces between words
 var removeExtraSpacesRegex = regexp.MustCompile(`\s+`)
@@ -162,9 +168,22 @@ func getRawGpu() (string, error) {
 		return "", err
 	}
 
+	var manufacturer, model string
+
 	contents := string(out)
-	match := getGpuManufacturerAndModel.FindStringSubmatch(contents)
-	return fmt.Sprintf("%v %v", match[1], match[2]), nil
+	match := getRawGpuManufacturerAndModelRegex.FindStringSubmatch(contents)
+
+	manufacturerMatch := getGpuManufacturerRegex.FindStringSubmatch(match[1])
+	if manufacturerMatch[1] == "" {
+		manufacturer = manufacturerMatch[2]
+	} else {
+		manufacturer = manufacturerMatch[1]
+	}
+
+	modelMatch := getGpuModelRegex.FindStringSubmatch(match[2])
+	model = modelMatch[1]
+
+	return fmt.Sprintf("%v %v", manufacturer, model), nil
 }
 
 // Returns OS pretty name
