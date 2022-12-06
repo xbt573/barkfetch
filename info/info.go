@@ -9,7 +9,7 @@ import (
 
 // Possible options, to make output sorted independent of config/cmd
 var possibleOptions = []string{"logo", "userline", "userunderline", "os",
-	"kernel", "uptime", "shell", "memory"}
+	"kernel", "uptime", "shell", "cpu", "memory"}
 
 // Regexp matching empty lines, useful to make output more pretty
 var emptyLinesRegex = regexp.MustCompile(`(?m)\n$`)
@@ -173,6 +173,19 @@ func GetInfoString(options map[string]string) (string, error) {
 				"\x1b[%vG${caccent}Shell${creset}: %v\n",
 				offset,
 				shell,
+			)
+			lines++
+
+		case "cpu":
+			cpu, err := getRawCpu()
+			if err != nil {
+				return "", err
+			}
+
+			output += formatAndColor(
+				"\x1b[%vG${caccent}CPU${creset}: %v\n",
+				offset,
+				cpu,
 			)
 			lines++
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
 	"syscall"
@@ -23,6 +24,15 @@ var (
 	getIdRegex           = regexp.MustCompile(`(?m)^ID=\"?([^\"]*?)\"?$`)
 	getPrettyNameRegex   = regexp.MustCompile(`(?m)^PRETTY_NAME=\"?([^\"]*?)\"?$`)
 )
+
+// Regex used to extract CPU model from /proc/cpuinfo
+var getCpuModelRegex = regexp.MustCompile(`(?m)^model name\s+: (.*)$`)
+
+// Regex used to extract GPU manufacturer and model from "lspci" output
+var getGpuManufacturerAndModel = regexp.MustCompile(`.*"(?:Display|3D|VGA).*?" "(.*?)" ".*?\[(.*?)\]"`)
+
+// Regex used to remove too much spaces between words
+var removeExtraSpacesRegex = regexp.MustCompile(`\s+`)
 
 // Convert array of int8 to string
 func int8ToStr(arr []int8) string {
@@ -125,6 +135,24 @@ func getRawMemory() (used, total int, err error) {
 	used = (totalMem + shMem - freeMem - buffers - cached - sReclaimable) / 1000
 
 	return
+}
+
+// Returns CPU model (currently first)
+func getRawCpu() (string, error) {
+	f, err := os.Open("/proc/cpuinfo")
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	raw, err := io.ReadAll(f)
+	if err != nil {
+		return "", err
+	}
+
+	contents := string(raw)
+	match := getCpuModelRegex.FindStringSubmatch(contents)
+	return removeExtraSpacesRegex.ReplaceAllString(match[1], " "), nil
 }
 
 // Returns OS pretty name

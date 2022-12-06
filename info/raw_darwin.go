@@ -94,6 +94,16 @@ func getRawMemory() (used, total int, err error) {
 	return
 }
 
+// Returns CPU model (currently first)
+func getRawCpu() (string, error) {
+	out, err := exec.Command("sysctl", "-n", "machdep.cpu.brand_string").Output()
+	if err != nil {
+		return "", err
+	}
+
+	return string(out[:len(out)-1]), nil
+}
+
 // Returns OS pretty name
 func getRawPrettyName() (string, error) {
 	out, err := exec.Command("sw_vers", "-productVersion").Output()
