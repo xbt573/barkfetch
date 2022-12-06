@@ -159,7 +159,7 @@ func getRawCpu() (string, error) {
 	contents := string(raw)
 	match := getCpuModelRegex.FindStringSubmatch(contents)
 
-	if len(match) == 1 {
+	if len(match) == 0 {
 		return "n/a", nil
 	}
 
