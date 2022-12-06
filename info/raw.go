@@ -32,6 +32,22 @@ func getRawArchitecture() string {
 	return runtime.GOARCH
 }
 
+// Get colors table
+func getRawColors() []string {
+	colors := []string{
+		"0", "1", "2", "3", "4", "5", "6", "7",
+		"8", "9", "10", "11", "12", "13", "14", "15",
+	}
+
+	colorArr := []string{}
+
+	for _, color := range colors {
+		colorArr = append(colorArr, fmt.Sprintf("${c%v}███", color))
+	}
+
+	return colorArr
+}
+
 // Logos
 var (
 	//go:embed logos/default.txt

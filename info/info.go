@@ -9,7 +9,7 @@ import (
 
 // Possible options, to make output sorted independent of config/cmd
 var possibleOptions = []string{"logo", "userline", "userunderline", "os",
-	"kernel", "uptime", "shell", "cpu", "gpu", "memory"}
+	"kernel", "uptime", "shell", "cpu", "gpu", "memory", "colors"}
 
 // Regexp matching empty lines, useful to make output more pretty
 var emptyLinesRegex = regexp.MustCompile(`(?m)\n$`)
@@ -215,6 +215,24 @@ func GetInfoString(options map[string]string) (string, error) {
 				total,
 				int(float32(used)/float32(total)*100.0),
 			)
+			lines++
+
+		case "colors":
+			colors := getRawColors()
+			i := 0
+
+			output += fmt.Sprintf("\x1b[%vG", offset)
+
+			for _, color := range colors {
+				if i == 8 {
+					output += fmt.Sprintf("\n\x1b[%vG", offset)
+					lines++
+					i = 0
+				}
+
+				output += formatAndColor("%v", color)
+				i++
+			}
 			lines++
 		}
 	}
