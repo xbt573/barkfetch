@@ -190,17 +190,19 @@ func GetInfoString(options map[string]string) (string, error) {
 			lines++
 
 		case "gpu":
-			gpu, err := getRawGpu()
+			gpus, err := getRawGpus()
 			if err != nil {
 				return "", err
 			}
 
-			output += formatAndColor(
-				"\x1b[%vG${caccent}GPU${creset}: %v\n",
-				offset,
-				gpu,
-			)
-			lines++
+			for _, gpu := range gpus {
+				output += formatAndColor(
+					"\x1b[%vG${caccent}GPU${creset}: %v\n",
+					offset,
+					gpu,
+				)
+				lines++
+			}
 
 		case "memory":
 			used, total, err := getRawMemory()

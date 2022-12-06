@@ -162,33 +162,38 @@ func getRawCpu() (string, error) {
 }
 
 // Returns GPU manufacturer and model
-func getRawGpu() (string, error) {
+func getRawGpus() ([]string, error) {
 	out, err := exec.Command("lspci", "-mm").Output()
 	if err != nil {
-		return "", err
+		return []string{}, err
 	}
-
-	var manufacturer, model string
 
 	contents := string(out)
-	match := getRawGpuManufacturerAndModelRegex.FindStringSubmatch(contents)
+	match := getRawGpuManufacturerAndModelRegex.FindAllStringSubmatch(contents, -1)
 
-	if strings.Index(match[1], "Intel") != -1 {
-		manufacturer = "Intel"
+	gpus := []string{}
+	for _, line := range match {
+		var manufacturer, model string
+
+		if strings.Index(line[1], "Intel") != -1 {
+			manufacturer = "Intel"
+		}
+
+		if strings.Index(line[1], "NVIDIA") != -1 {
+			manufacturer = "NVIDIA"
+		}
+
+		if strings.Index(line[1], "AMD") != -1 {
+			manufacturer = "AMD"
+		}
+
+		modelMatch := getGpuModelRegex.FindStringSubmatch(line[2])
+		model = modelMatch[1]
+
+		gpus = append(gpus, fmt.Sprintf("%v %v", manufacturer, model))
 	}
 
-	if strings.Index(match[1], "NVIDIA") != -1 {
-		manufacturer = "NVIDIA"
-	}
-
-	if strings.Index(match[1], "AMD") != -1 {
-		manufacturer = "AMD"
-	}
-
-	modelMatch := getGpuModelRegex.FindStringSubmatch(match[2])
-	model = modelMatch[1]
-
-	return fmt.Sprintf("%v %v", manufacturer, model), nil
+	return gpus, nil
 }
 
 // Returns OS pretty name

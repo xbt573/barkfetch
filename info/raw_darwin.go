@@ -108,15 +108,15 @@ func getRawCpu() (string, error) {
 }
 
 // Returns GPU manufacturer and model
-func getRawGpu() (string, error) {
+func getRawGpu() ([]string, error) {
 	out, err := exec.Command("system_profiler", "SPDisplaysDataType").Output()
 	if err != nil {
-		return "", err
+		return []string{}, err
 	}
 
 	contents := string(out)
 	match := extractChipsetModel.FindStringSubmatch(contents)
-	return match[1], nil
+	return []string{match[1]}, nil
 }
 
 // Returns OS pretty name
