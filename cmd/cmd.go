@@ -22,7 +22,10 @@ var (
 	_kernel        = flag.Bool("kernel", true, "Display system kernel type and version")
 	_uptime        = flag.Bool("uptime", true, "Display system uptime")
 	_shell         = flag.Bool("shell", true, "Display current shell")
+	_cpu           = flag.Bool("cpu", true, "Display CPU model")
+	_gpu           = flag.Bool("gpu", true, "Display GPU manufacturer and model")
 	_memory        = flag.Bool("memory", true, "Display used and total memory in megabytes")
+	_colors        = flag.Bool("colors", true, "Display colors")
 )
 
 // Helper function, returns true if flag was given at command-line
@@ -104,8 +107,20 @@ configChosed:
 		config["shell"] = boolToString(*_shell)
 	}
 
+	if isFlagPassed("cpu") {
+		config["cpu"] = boolToString(*_cpu)
+	}
+
+	if isFlagPassed("gpu") {
+		config["gpu"] = boolToString(*_gpu)
+	}
+
 	if isFlagPassed("memory") {
 		config["memory"] = boolToString(*_memory)
+	}
+
+	if isFlagPassed("colors") {
+		config["colors"] = boolToString(*_colors)
 	}
 
 	return config, nil
@@ -144,7 +159,6 @@ func Run() error {
 		return err
 	}
 
-	// "logo", "userline", "userunderline", "os", "kernel", "uptime", "shell", "memory"
 	sysinfo, err := info.GetInfoString(config)
 
 	if err != nil {

@@ -21,6 +21,9 @@ var (
 	extractCompressedMemory  = regexp.MustCompile(`Pages occupied by compressor:\s+(\d+)\.`)
 )
 
+// Extract GPU model from "system_profiler SPDisplaysDataType"
+var extractChipsetModel = regexp.MustCompile(`Chipset Model: (.*)`)
+
 // Returns OS kernel type and it's version
 func getRawKernel() (string, error) {
 	out, err := exec.Command("uname", "-r").Output()
@@ -92,6 +95,28 @@ func getRawMemory() (used, total int, err error) {
 
 	used = int((wired + active + compressed) * 4 / 1024)
 	return
+}
+
+// Returns CPU model (currently first)
+func getRawCpu() (string, error) {
+	out, err := exec.Command("sysctl", "-n", "machdep.cpu.brand_string").Output()
+	if err != nil {
+		return "", err
+	}
+
+	return string(out[:len(out)-1]), nil
+}
+
+// Returns GPU manufacturer and model
+func getRawGpu() ([]string, error) {
+	out, err := exec.Command("system_profiler", "SPDisplaysDataType").Output()
+	if err != nil {
+		return []string{}, err
+	}
+
+	contents := string(out)
+	match := extractChipsetModel.FindStringSubmatch(contents)
+	return []string{match[1]}, nil
 }
 
 // Returns OS pretty name

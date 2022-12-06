@@ -6,8 +6,10 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"os/exec"
 	"regexp"
 	"strconv"
+	"strings"
 	"syscall"
 )
 
@@ -24,8 +26,22 @@ var (
 	getPrettyNameRegex   = regexp.MustCompile(`(?m)^PRETTY_NAME=\"?([^\"]*?)\"?$`)
 )
 
-// Convert array of int8 to string
-func int8ToStr(arr []int8) string {
+// Regex used to extract CPU model from /proc/cpuinfo
+var getCpuModelRegex = regexp.MustCompile(`(?m)^model name\s+: (.*)$`)
+
+// Regex used to extract raw GPU manufacturer and model from "lspci" output
+var getRawGpuManufacturerAndModelRegex = regexp.MustCompile(`.*"(?:Display|3D|VGA).*?" "(.*?)" "(.*?)"`)
+
+// Regexes used to extract pretty GPU manufacturer and model from raw input
+var (
+	getGpuModelRegex = regexp.MustCompile(`.*\[(.*)\]`)
+)
+
+// Regex used to remove too much spaces between words
+var removeExtraSpacesRegex = regexp.MustCompile(`\s+`)
+
+// Convert array of (u)int8 to string
+func int8ToStr(arr []int) string {
 	b := make([]byte, 0, len(arr))
 	for _, v := range arr {
 		if v == 0x00 {
@@ -45,11 +61,17 @@ func getRawKernel() (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("Linux %v", int8ToStr(info.Release[:])), nil
+	intArr := []int{}
+
+	for _, val := range info.Release {
+		intArr = append(intArr, int(val))
+	}
+
+	return fmt.Sprintf("Linux %v", int8ToStr(intArr)), nil
 }
 
 // Returns system uptime in seconds
-func getRawUptime() (int64, error) {
+func getRawUptime() (int, error) {
 	var info syscall.Sysinfo_t
 
 	err := syscall.Sysinfo(&info)
@@ -57,7 +79,7 @@ func getRawUptime() (int64, error) {
 		return -1, err
 	}
 
-	return info.Uptime, nil
+	return int(info.Uptime), nil
 }
 
 // Returns used shell
@@ -125,6 +147,64 @@ func getRawMemory() (used, total int, err error) {
 	used = (totalMem + shMem - freeMem - buffers - cached - sReclaimable) / 1000
 
 	return
+}
+
+// Returns CPU model (currently first)
+func getRawCpu() (string, error) {
+	f, err := os.Open("/proc/cpuinfo")
+	if err != nil {
+		return "", err
+	}
+	defer f.Close()
+
+	raw, err := io.ReadAll(f)
+	if err != nil {
+		return "", err
+	}
+
+	contents := string(raw)
+	match := getCpuModelRegex.FindStringSubmatch(contents)
+
+	if len(match) == 0 {
+		return "n/a", nil
+	}
+
+	return removeExtraSpacesRegex.ReplaceAllString(match[1], " "), nil
+}
+
+// Returns GPU manufacturer and model
+func getRawGpus() ([]string, error) {
+	out, err := exec.Command("lspci", "-mm").Output()
+	if err != nil {
+		return []string{}, err
+	}
+
+	contents := string(out)
+	match := getRawGpuManufacturerAndModelRegex.FindAllStringSubmatch(contents, -1)
+
+	gpus := []string{}
+	for _, line := range match {
+		var manufacturer, model string
+
+		if strings.Index(line[1], "Intel") != -1 {
+			manufacturer = "Intel"
+		}
+
+		if strings.Index(line[1], "NVIDIA") != -1 {
+			manufacturer = "NVIDIA"
+		}
+
+		if strings.Index(line[1], "AMD") != -1 {
+			manufacturer = "AMD"
+		}
+
+		modelMatch := getGpuModelRegex.FindStringSubmatch(line[2])
+		model = modelMatch[1]
+
+		gpus = append(gpus, fmt.Sprintf("%v %v", manufacturer, model))
+	}
+
+	return gpus, nil
 }
 
 // Returns OS pretty name
