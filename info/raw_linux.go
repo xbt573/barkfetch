@@ -29,7 +29,7 @@ var (
 var getCpuModelRegex = regexp.MustCompile(`(?m)^model name\s+: (.*)$`)
 
 // Regex used to extract GPU manufacturer and model from "lspci" output
-var getGpuManufacturerAndModel = regexp.MustCompile(`.*"(?:Display|3D|VGA).*?" ".*?\[(.*)\]" ".*?\[(.*?)\]"`)
+var getGpuManufacturerAndModel = regexp.MustCompile(`.*"(?:Display|3D|VGA).*?" "(?:(NVIDIA).*|.*?\[(.*)\])" ".*?\[(.*?)\]"`)
 
 // Regex used to remove too much spaces between words
 var removeExtraSpacesRegex = regexp.MustCompile(`\s+`)
