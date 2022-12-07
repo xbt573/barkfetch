@@ -4,6 +4,9 @@ import (
 	"embed"
 	_ "embed"
 	"fmt"
+	"io"
+	"net"
+	"net/http"
 	"os"
 	"regexp"
 	"runtime"
@@ -30,6 +33,34 @@ func getRawHostname() string {
 	}
 
 	return hostname
+}
+
+// Get local ip
+func getRawLocalIp() string {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return "n/a"
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP.String()
+}
+
+// Get outbound ip
+func getRawOutboundIp() string {
+	resp, err := http.Get("https://api.ipify.org?format=text")
+	if err != nil {
+		return "n/a"
+	}
+	defer resp.Body.Close()
+
+	ip, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "n/a"
+	}
+
+	return string(ip)
 }
 
 // Gets OS architecture

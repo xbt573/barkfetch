@@ -26,6 +26,8 @@ var (
 	_cpu           = flag.Bool("cpu", true, "Display CPU model")
 	_gpu           = flag.Bool("gpu", true, "Display GPU manufacturer and model")
 	_memory        = flag.Bool("memory", true, "Display used and total memory in megabytes")
+	_localip       = flag.Bool("localip", true, "Display local IP")
+	_remoteip      = flag.Bool("remoteip", true, "Display remote IP")
 	_colors        = flag.Bool("colors", true, "Display colors")
 )
 
@@ -122,6 +124,14 @@ configChosed:
 
 	if isFlagPassed("memory") {
 		config["memory"] = boolToString(*_memory)
+	}
+
+	if isFlagPassed("localip") {
+		config["localip"] = boolToString(*_localip)
+	}
+
+	if isFlagPassed("remoteip") {
+		config["remoteip"] = boolToString(*_remoteip)
 	}
 
 	if isFlagPassed("colors") {

@@ -9,7 +9,8 @@ import (
 
 // Possible options, to make output sorted independent of config/cmd
 var possibleOptions = []string{"logo", "userline", "userunderline", "os",
-	"kernel", "uptime", "shell", "resolution", "cpu", "gpu", "memory", "colors"}
+	"kernel", "uptime", "shell", "resolution", "cpu", "gpu", "memory", "localip",
+	"remoteip", "colors"}
 
 // Regexp matching empty lines, useful to make output more pretty
 var emptyLinesRegex = regexp.MustCompile(`(?m)\n$`)
@@ -225,6 +226,26 @@ func GetInfoString(options map[string]string) string {
 				)
 			}
 
+			lines++
+
+		case "localip":
+			localip := getRawLocalIp()
+
+			output += formatAndColor(
+				"\x1b[%vG${caccent}Local IP${creset}: %v\n",
+				offset,
+				localip,
+			)
+			lines++
+
+		case "remoteip":
+			remoteip := getRawOutboundIp()
+
+			output += formatAndColor(
+				"\x1b[%vG${caccent}Remote IP${creset}: %v\n",
+				offset,
+				remoteip,
+			)
 			lines++
 
 		case "colors":

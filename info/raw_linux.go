@@ -16,7 +16,6 @@ import (
 var (
 	getTotalMemRegex     = regexp.MustCompile(`MemTotal:\s+(\d+) kB`)
 	getFreeMemRegex      = regexp.MustCompile(`MemFree:\s+(\d+) kB`)
-	getAvailableMemRegex = regexp.MustCompile(`MemAvailable:\s+(\d+) kB`)
 	getShMemRegex        = regexp.MustCompile(`Shmem:\s+(\d+) kB`)
 	getBuffersRegex      = regexp.MustCompile(`Buffers:\s+(\d+) kB`)
 	getCachedRegex       = regexp.MustCompile(`Cached:\s+(\d+) kB`)
@@ -197,15 +196,15 @@ func getRawGpus() []string {
 	for _, line := range match {
 		var manufacturer, model string
 
-		if strings.Index(line[1], "Intel") != -1 {
+		if strings.Contains(line[1], "Intel") {
 			manufacturer = "Intel"
 		}
 
-		if strings.Index(line[1], "NVIDIA") != -1 {
+		if strings.Contains(line[1], "NVIDIA") {
 			manufacturer = "NVIDIA"
 		}
 
-		if strings.Index(line[1], "AMD") != -1 {
+		if strings.Contains(line[1], "AMD") {
 			manufacturer = "AMD"
 		}
 
