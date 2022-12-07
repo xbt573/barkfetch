@@ -4,7 +4,6 @@ package info
 
 import (
 	"fmt"
-	"io"
 	"os"
 	"os/exec"
 	"regexp"
@@ -17,7 +16,6 @@ import (
 var (
 	getTotalMemRegex     = regexp.MustCompile(`MemTotal:\s+(\d+) kB`)
 	getFreeMemRegex      = regexp.MustCompile(`MemFree:\s+(\d+) kB`)
-	getAvailableMemRegex = regexp.MustCompile(`MemAvailable:\s+(\d+) kB`)
 	getShMemRegex        = regexp.MustCompile(`Shmem:\s+(\d+) kB`)
 	getBuffersRegex      = regexp.MustCompile(`Buffers:\s+(\d+) kB`)
 	getCachedRegex       = regexp.MustCompile(`Cached:\s+(\d+) kB`)
@@ -37,6 +35,9 @@ var (
 	getGpuModelRegex = regexp.MustCompile(`.*\[(.*)\]`)
 )
 
+// Regex used to extract resolutions from "xrandr --nograb --current"
+var getResolutionRegex = regexp.MustCompile(`connected(?: primary)? (\d+)x(\d+)`)
+
 // Regex used to remove too much spaces between words
 var removeExtraSpacesRegex = regexp.MustCompile(`\s+`)
 
@@ -53,12 +54,12 @@ func int8ToStr(arr []int) string {
 }
 
 // Returns OS kernel type and it's version
-func getRawKernel() (string, error) {
+func getRawKernel() string {
 	var info syscall.Utsname
 
 	err := syscall.Uname(&info)
 	if err != nil {
-		return "", err
+		return "n/a"
 	}
 
 	intArr := []int{}
@@ -67,19 +68,19 @@ func getRawKernel() (string, error) {
 		intArr = append(intArr, int(val))
 	}
 
-	return fmt.Sprintf("Linux %v", int8ToStr(intArr)), nil
+	return fmt.Sprintf("Linux %v", int8ToStr(intArr))
 }
 
 // Returns system uptime in seconds
-func getRawUptime() (int, error) {
+func getRawUptime() int {
 	var info syscall.Sysinfo_t
 
 	err := syscall.Sysinfo(&info)
 	if err != nil {
-		return -1, err
+		return -1
 	}
 
-	return int(info.Uptime), nil
+	return int(info.Uptime)
 }
 
 // Returns used shell
@@ -88,50 +89,63 @@ func getRawShell() string {
 }
 
 // Returns used and total memory in megabytes
-func getRawMemory() (used, total int, err error) {
-	f, err := os.Open("/proc/meminfo")
-	if err != nil {
-		return
-	}
-
-	raw, err := io.ReadAll(f)
+func getRawMemory() (used, total int) {
+	raw, err := os.ReadFile("/proc/meminfo")
 	if err != nil {
 		return
 	}
 
 	contents := string(raw)
-	match := getTotalMemRegex.FindStringSubmatch(contents)
 
+	match := getTotalMemRegex.FindStringSubmatch(contents)
+	if len(match) == 0 {
+		return
+	}
 	totalMem, err := strconv.Atoi(match[1])
 	if err != nil {
 		return
 	}
 
 	match = getShMemRegex.FindStringSubmatch(contents)
+	if len(match) == 0 {
+		return
+	}
 	shMem, err := strconv.Atoi(match[1])
 	if err != nil {
 		return
 	}
 
 	match = getFreeMemRegex.FindStringSubmatch(contents)
+	if len(match) == 0 {
+		return
+	}
 	freeMem, err := strconv.Atoi(match[1])
 	if err != nil {
 		return
 	}
 
 	match = getBuffersRegex.FindStringSubmatch(contents)
+	if len(match) == 0 {
+		return
+	}
 	buffers, err := strconv.Atoi(match[1])
 	if err != nil {
 		return
 	}
 
 	match = getCachedRegex.FindStringSubmatch(contents)
+	if len(match) == 0 {
+		return
+	}
 	cached, err := strconv.Atoi(match[1])
 	if err != nil {
 		return
 	}
 
 	match = getSReclaimableRegex.FindStringSubmatch(contents)
+	if len(match) == 0 {
+		return
+	}
 	sReclaimable, err := strconv.Atoi(match[1])
 	if err != nil {
 		return
@@ -150,51 +164,47 @@ func getRawMemory() (used, total int, err error) {
 }
 
 // Returns CPU model (currently first)
-func getRawCpu() (string, error) {
-	f, err := os.Open("/proc/cpuinfo")
+func getRawCpu() string {
+	raw, err := os.ReadFile("/proc/cpuinfo")
 	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	raw, err := io.ReadAll(f)
-	if err != nil {
-		return "", err
+		return "n/a"
 	}
 
 	contents := string(raw)
 	match := getCpuModelRegex.FindStringSubmatch(contents)
-
 	if len(match) == 0 {
-		return "n/a", nil
+		return "n/a"
 	}
 
-	return removeExtraSpacesRegex.ReplaceAllString(match[1], " "), nil
+	return removeExtraSpacesRegex.ReplaceAllString(match[1], " ")
 }
 
 // Returns GPU manufacturer and model
-func getRawGpus() ([]string, error) {
+func getRawGpus() []string {
 	out, err := exec.Command("lspci", "-mm").Output()
 	if err != nil {
-		return []string{}, err
+		return []string{}
 	}
 
 	contents := string(out)
 	match := getRawGpuManufacturerAndModelRegex.FindAllStringSubmatch(contents, -1)
+	if len(match) == 0 {
+		return []string{}
+	}
 
 	gpus := []string{}
 	for _, line := range match {
 		var manufacturer, model string
 
-		if strings.Index(line[1], "Intel") != -1 {
+		if strings.Contains(line[1], "Intel") {
 			manufacturer = "Intel"
 		}
 
-		if strings.Index(line[1], "NVIDIA") != -1 {
+		if strings.Contains(line[1], "NVIDIA") {
 			manufacturer = "NVIDIA"
 		}
 
-		if strings.Index(line[1], "AMD") != -1 {
+		if strings.Contains(line[1], "AMD") {
 			manufacturer = "AMD"
 		}
 
@@ -204,42 +214,59 @@ func getRawGpus() ([]string, error) {
 		gpus = append(gpus, fmt.Sprintf("%v %v", manufacturer, model))
 	}
 
-	return gpus, nil
+	return gpus
+}
+
+// Returns main screen resolution
+func getRawScreenResolutions() []string {
+	out, err := exec.Command("xrandr", "--nograb", "--current").Output()
+	if err != nil {
+		return []string{}
+	}
+
+	contents := string(out)
+	match := getResolutionRegex.FindAllStringSubmatch(contents, -1)
+	if len(match) == 0 {
+		return []string{}
+	}
+
+	resolutions := []string{}
+
+	for _, resMatch := range match {
+		resolutions = append(resolutions, fmt.Sprintf("%vx%v", resMatch[1], resMatch[2]))
+	}
+
+	return resolutions
 }
 
 // Returns OS pretty name
-func getRawPrettyName() (string, error) {
-	f, err := os.Open("/etc/os-release")
+func getRawPrettyName() string {
+	raw, err := os.ReadFile("/etc/os-release")
 	if err != nil {
-		return "", err
-	}
-	defer f.Close()
-
-	raw, err := io.ReadAll(f)
-	if err != nil {
-		return "", err
+		return "n/a"
 	}
 
 	contents := string(raw)
 	match := getPrettyNameRegex.FindStringSubmatch(contents)
-	return match[1], nil
+	if len(match) == 0 {
+		return "n/a"
+	}
+
+	return match[1]
 }
 
 // Guesses distro by /etc/os-release values
 func guessDistro() string {
-	f, err := os.Open("/etc/os-release")
+	raw, err := os.ReadFile("/etc/os-release")
 	if err != nil {
-		return ""
-	}
-	defer f.Close()
-
-	raw, err := io.ReadAll(f)
-	if err != nil {
-		return ""
+		return "n/a"
 	}
 
 	contents := string(raw)
 	match := getIdRegex.FindStringSubmatch(contents)
+	if len(match) == 0 {
+		return "n/a"
+	}
 
 	return match[1]
 }

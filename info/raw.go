@@ -4,6 +4,9 @@ import (
 	"embed"
 	_ "embed"
 	"fmt"
+	"io"
+	"net"
+	"net/http"
 	"os"
 	"regexp"
 	"runtime"
@@ -23,8 +26,41 @@ func getRawUser() string {
 }
 
 // Gets system hostname
-func getRawHostname() (string, error) {
-	return os.Hostname()
+func getRawHostname() string {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return "n/a"
+	}
+
+	return hostname
+}
+
+// Get local ip
+func getRawLocalIp() string {
+	conn, err := net.Dial("udp", "8.8.8.8:80")
+	if err != nil {
+		return "n/a"
+	}
+	defer conn.Close()
+
+	localAddr := conn.LocalAddr().(*net.UDPAddr)
+	return localAddr.IP.String()
+}
+
+// Get outbound ip
+func getRawOutboundIp() string {
+	resp, err := http.Get("https://api.ipify.org?format=text")
+	if err != nil {
+		return "n/a"
+	}
+	defer resp.Body.Close()
+
+	ip, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return "n/a"
+	}
+
+	return string(ip)
 }
 
 // Gets OS architecture
@@ -59,17 +95,15 @@ var (
 
 // Returns distro logo by name, or guesses if arg is "auto"
 // Currently return small count of logos, mostly default
-func getLogo(distro string) (Logo, error) {
-	logoText := ""
+func getLogo(distro string) Logo {
+	logoText := _default
 
 	if distro == "auto" {
 		return getLogo(guessDistro())
 	}
 
 	bytes, err := logos.ReadFile(fmt.Sprintf("logos/%v.txt", distro))
-	if err != nil {
-		logoText = _default
-	} else {
+	if err == nil {
 		logoText = string(bytes)
 	}
 
@@ -94,5 +128,5 @@ func getLogo(distro string) (Logo, error) {
 
 	logo.MaxLength = max
 
-	return logo, nil
+	return logo
 }
