@@ -9,7 +9,7 @@ import (
 
 // Possible options, to make output sorted independent of config/cmd
 var possibleOptions = []string{"logo", "userline", "userunderline", "os",
-	"kernel", "uptime", "shell", "cpu", "gpu", "memory", "colors"}
+	"kernel", "uptime", "shell", "resolution", "cpu", "gpu", "memory", "colors"}
 
 // Regexp matching empty lines, useful to make output more pretty
 var emptyLinesRegex = regexp.MustCompile(`(?m)\n$`)
@@ -23,7 +23,7 @@ func formatAndColor(format string, args ...any) string {
 }
 
 // Returns processed info for pretty output
-func GetInfoString(options map[string]string) (string, error) {
+func GetInfoString(options map[string]string) string {
 	// out string
 	var output string
 
@@ -45,10 +45,7 @@ func GetInfoString(options map[string]string) (string, error) {
 
 		switch possibleOption {
 		case "logo":
-			logo, err := getLogo(value)
-			if err != nil {
-				return "", err
-			}
+			logo := getLogo(value)
 
 			output += os.Expand(logo.Logo, ColorExpand) +
 				strings.Repeat("\x1b[F", logo.Lines-1)
@@ -58,10 +55,7 @@ func GetInfoString(options map[string]string) (string, error) {
 
 		case "userline":
 			username := getRawUser()
-			hostname, err := getRawHostname()
-			if err != nil {
-				return "", nil
-			}
+			hostname := getRawHostname()
 
 			output += formatAndColor(
 				"\x1b[%vG${caccent}%v${creset}@${caccent}%v${creset}\n",
@@ -73,10 +67,7 @@ func GetInfoString(options map[string]string) (string, error) {
 
 		case "userunderline":
 			username := getRawUser()
-			hostname, err := getRawHostname()
-			if err != nil {
-				return "", nil
-			}
+			hostname := getRawHostname()
 
 			output += formatAndColor(
 				"\x1b[%vG%v\n",
@@ -86,11 +77,7 @@ func GetInfoString(options map[string]string) (string, error) {
 			lines++
 
 		case "os":
-			os, err := getRawPrettyName()
-			if err != nil {
-				return "", err
-			}
-
+			os := getRawPrettyName()
 			arch := getRawArchitecture()
 
 			output += formatAndColor(
@@ -102,10 +89,7 @@ func GetInfoString(options map[string]string) (string, error) {
 			lines++
 
 		case "kernel":
-			kernel, err := getRawKernel()
-			if err != nil {
-				return "", err
-			}
+			kernel := getRawKernel()
 
 			output += formatAndColor(
 				"\x1b[%vG${caccent}Kernel${creset}: %v\n",
@@ -115,12 +99,16 @@ func GetInfoString(options map[string]string) (string, error) {
 			lines++
 
 		case "uptime":
-			uptime, err := getRawUptime()
-			if err != nil {
-				return "", err
+			uptime := getRawUptime()
+
+			if uptime <= 0 {
+				output += formatAndColor(
+					"\x1b[%vG${caccent}Uptime:${creset}: n/a\n",
+					offset,
+				)
 			}
 
-			if uptime <= 60 {
+			if uptime > 0 && uptime <= 60 {
 				output += formatAndColor(
 					"\x1b[%vG${caccent}Uptime${creset}: %v s\n",
 					offset,
@@ -159,12 +147,6 @@ func GetInfoString(options map[string]string) (string, error) {
 			}
 
 			lines++
-			// output += formatAndColor(
-			// 	"\x1b[%vG${caccent}Uptime${creset}: %v minutes\n",
-			// 	offset,
-			// 	int(uptime/60),
-			// )
-			// lines++
 
 		case "shell":
 			shell := getRawShell()
@@ -176,11 +158,18 @@ func GetInfoString(options map[string]string) (string, error) {
 			)
 			lines++
 
+		case "resolution":
+			resolution := getRawScreenResolution()
+
+			output += formatAndColor(
+				"\x1b[%vG${caccent}Resolution${creset}: %v\n",
+				offset,
+				resolution,
+			)
+			lines++
+
 		case "cpu":
-			cpu, err := getRawCpu()
-			if err != nil {
-				return "", err
-			}
+			cpu := getRawCpu()
 
 			output += formatAndColor(
 				"\x1b[%vG${caccent}CPU${creset}: %v\n",
@@ -190,9 +179,13 @@ func GetInfoString(options map[string]string) (string, error) {
 			lines++
 
 		case "gpu":
-			gpus, err := getRawGpus()
-			if err != nil {
-				return "", err
+			gpus := getRawGpus()
+
+			if len(gpus) == 0 {
+				output += formatAndColor(
+					"\x1b[%vG${caccent}GPU${creset}: n/a\n",
+					offset,
+				)
 			}
 
 			for _, gpu := range gpus {
@@ -205,18 +198,23 @@ func GetInfoString(options map[string]string) (string, error) {
 			}
 
 		case "memory":
-			used, total, err := getRawMemory()
-			if err != nil {
-				return "", err
+			used, total := getRawMemory()
+
+			if used <= 0 || total <= 0 {
+				output += formatAndColor(
+					"\x1b[%vG${caccent}Memory${creset}: n/a\n",
+					offset,
+				)
+			} else {
+				output += formatAndColor(
+					"\x1b[%vG${caccent}Memory${creset}: %v / %v Mb (%v%%)\n",
+					offset,
+					used,
+					total,
+					int(float32(used)/float32(total)*100.0),
+				)
 			}
 
-			output += formatAndColor(
-				"\x1b[%vG${caccent}Memory${creset}: %v / %v Mb (%v%%)\n",
-				offset,
-				used,
-				total,
-				int(float32(used)/float32(total)*100.0),
-			)
 			lines++
 
 		case "colors":
@@ -245,6 +243,5 @@ func GetInfoString(options map[string]string) (string, error) {
 		output += strings.Repeat("\n", logolines-lines)
 	}
 
-	return output, nil
-	// return emptyLinesRegex.ReplaceAllString(output, ""), nil
+	return output
 }

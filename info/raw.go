@@ -23,8 +23,13 @@ func getRawUser() string {
 }
 
 // Gets system hostname
-func getRawHostname() (string, error) {
-	return os.Hostname()
+func getRawHostname() string {
+	hostname, err := os.Hostname()
+	if err != nil {
+		return "n/a"
+	}
+
+	return hostname
 }
 
 // Gets OS architecture
@@ -59,17 +64,15 @@ var (
 
 // Returns distro logo by name, or guesses if arg is "auto"
 // Currently return small count of logos, mostly default
-func getLogo(distro string) (Logo, error) {
-	logoText := ""
+func getLogo(distro string) Logo {
+	logoText := _default
 
 	if distro == "auto" {
 		return getLogo(guessDistro())
 	}
 
 	bytes, err := logos.ReadFile(fmt.Sprintf("logos/%v.txt", distro))
-	if err != nil {
-		logoText = _default
-	} else {
+	if err == nil {
 		logoText = string(bytes)
 	}
 
@@ -94,5 +97,5 @@ func getLogo(distro string) (Logo, error) {
 
 	logo.MaxLength = max
 
-	return logo, nil
+	return logo
 }

@@ -22,6 +22,7 @@ var (
 	_kernel        = flag.Bool("kernel", true, "Display system kernel type and version")
 	_uptime        = flag.Bool("uptime", true, "Display system uptime")
 	_shell         = flag.Bool("shell", true, "Display current shell")
+	_resolution    = flag.Bool("resolution", true, "Display screen resolution")
 	_cpu           = flag.Bool("cpu", true, "Display CPU model")
 	_gpu           = flag.Bool("gpu", true, "Display GPU manufacturer and model")
 	_memory        = flag.Bool("memory", true, "Display used and total memory in megabytes")
@@ -107,6 +108,10 @@ configChosed:
 		config["shell"] = boolToString(*_shell)
 	}
 
+	if isFlagPassed("resolution") {
+		config["resolution"] = boolToString(*_resolution)
+	}
+
 	if isFlagPassed("cpu") {
 		config["cpu"] = boolToString(*_cpu)
 	}
@@ -159,12 +164,7 @@ func Run() error {
 		return err
 	}
 
-	sysinfo, err := info.GetInfoString(config)
-
-	if err != nil {
-		return err
-	}
-
+	sysinfo := info.GetInfoString(config)
 	fmt.Println(sysinfo)
 
 	return nil
