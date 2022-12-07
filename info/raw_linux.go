@@ -36,6 +36,9 @@ var (
 	getGpuModelRegex = regexp.MustCompile(`.*\[(.*)\]`)
 )
 
+// Regex used to extract resolutions from "xrandr --nograb --current"
+var getResolutionRegex = regexp.MustCompile(`connected(?: primary)? (\d+)x(\d+)`)
+
 // Regex used to remove too much spaces between words
 var removeExtraSpacesRegex = regexp.MustCompile(`\s+`)
 
@@ -216,13 +219,25 @@ func getRawGpus() []string {
 }
 
 // Returns main screen resolution
-func getRawScreenResolution() string {
-	raw, err := os.ReadFile("/sys/class/graphics/fb0/virtual_size")
+func getRawScreenResolutions() []string {
+	out, err := exec.Command("xrandr", "--nograb", "--current").Output()
 	if err != nil {
-		return "n/a"
+		return []string{}
 	}
 
-	return strings.Replace(string(raw), ",", "x", -1)
+	contents := string(out)
+	match := getResolutionRegex.FindAllStringSubmatch(contents, -1)
+	if len(match) == 0 {
+		return []string{}
+	}
+
+	resolutions := []string{}
+
+	for _, resMatch := range match {
+		resolutions = append(resolutions, fmt.Sprintf("%vx%v", resMatch[1], resMatch[2]))
+	}
+
+	return resolutions
 }
 
 // Returns OS pretty name

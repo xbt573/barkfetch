@@ -159,14 +159,24 @@ func GetInfoString(options map[string]string) string {
 			lines++
 
 		case "resolution":
-			resolution := getRawScreenResolution()
+			resolutions := getRawScreenResolutions()
 
-			output += formatAndColor(
-				"\x1b[%vG${caccent}Resolution${creset}: %v\n",
-				offset,
-				resolution,
-			)
-			lines++
+			for _, res := range resolutions {
+				output += formatAndColor(
+					"\x1b[%vG${caccent}Resolution${creset}: %v\n",
+					offset,
+					res,
+				)
+				lines++
+			}
+
+			if len(resolutions) == 0 {
+				output += formatAndColor(
+					"\x1b[%vG${caccent}Resolution${creset}: n/a\n",
+					offset,
+				)
+				lines++
+			}
 
 		case "cpu":
 			cpu := getRawCpu()

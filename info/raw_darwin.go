@@ -139,19 +139,19 @@ func getRawGpus() []string {
 }
 
 // Returns main screen resolution
-func getRawScreenResolution() string {
+func getRawScreenResolutions() []string {
 	out, err := exec.Command("system_profiler", "SPDisplaysDataType").Output()
 	if err != nil {
-		return "n/a"
+		return []string{}
 	}
 
 	contents := string(out)
 	match := extractResolutionRegex.FindStringSubmatch(contents)
 	if len(match) == 0 {
-		return "n/a"
+		return []string{}
 	}
 
-	return match[1]
+	return []string{match[1]}
 }
 
 // Returns OS pretty name
