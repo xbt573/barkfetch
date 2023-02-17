@@ -1,13 +1,14 @@
 package cmd
 
 import (
-	"barkfetch/info"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"os"
 	"strings"
+
+	"github.com/xbt573/barkfetch/info"
 )
 
 // Config not found error

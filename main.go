@@ -1,6 +1,6 @@
 package main
 
-import "barkfetch/cmd"
+import "github.com/xbt573/barkfetch/cmd"
 
 func main() {
 	err := cmd.Run()

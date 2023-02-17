@@ -1,3 +1,3 @@
-module barkfetch
+module github.com/xbt573/barkfetch
 
-go 1.19
+go 1.20
