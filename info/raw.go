@@ -109,11 +109,9 @@ func getLogo(distro string) Logo {
 
 	var logo Logo
 
-	match := getLogoRegex.FindStringSubmatch(logoText)
-	logo.Logo = match[1]
+	logo.Logo = getLogoRegex.FindStringSubmatch(logoText)[1]
 
-	match = getAccentRegex.FindStringSubmatch(logoText)
-	logo.AccentColor = match[1]
+	logo.AccentColor = getAccentRegex.FindStringSubmatch(logoText)[1]
 
 	directiveFreeLogoText := replaceDirectivesRegex.ReplaceAllString(logoText, "")
 	logo.Lines = len(strings.Split(directiveFreeLogoText, "\n"))
