@@ -194,7 +194,7 @@ func getRawGpus() []string {
 
 	gpus := []string{}
 	for _, line := range match {
-		var manufacturer, model string
+		var manufacturer string
 
 		if strings.Contains(line[1], "Intel") {
 			manufacturer = "Intel"
@@ -209,9 +209,9 @@ func getRawGpus() []string {
 		}
 
 		modelMatch := getGpuModelRegex.FindStringSubmatch(line[2])
-		model = modelMatch[1]
-
-		gpus = append(gpus, fmt.Sprintf("%v %v", manufacturer, model))
+		if len(modelMatch) > 0 {
+			gpus = append(gpus, fmt.Sprintf("%v %v", manufacturer, modelMatch[1]))
+		}
 	}
 
 	return gpus
