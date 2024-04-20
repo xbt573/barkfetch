@@ -4,7 +4,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io"
 	"os"
 	"strings"
 
@@ -32,12 +31,15 @@ var (
 	_colors        = flag.Bool("colors", true, "Display colors")
 )
 
+var configCommonPaths = [3]string{"./barkfetch.config", os.ExpandEnv("$HOME/.config/barkfetch/config"), "/etc/barkfetch.config"}
+
 // Helper function, returns true if flag was given at command-line
 func isFlagPassed(name string) bool {
 	found := false
 	flag.Visit(func(f *flag.Flag) {
-		if f.Name == name {
-			found = true
+		found = f.Name == name
+		if found {
+			return
 		}
 	})
 
@@ -46,41 +48,24 @@ func isFlagPassed(name string) bool {
 
 // Converts true to "true" and false to "false"
 func boolToString(input bool) string {
-	if input {
-		return "true"
-	}
-
-	return "false"
+	return fmt.Sprintf("%t", input)
 }
 
 // Load config and return map of options
 func loadConfig() (map[string]string, error) {
-	f, err := os.Open("./barkfetch.config")
-	if err == nil {
-		goto configChosed
-	}
-
-	f, err = os.Open(os.ExpandEnv("$HOME/.config/barkfetch/config"))
-	if err == nil {
-		goto configChosed
-	}
-
-	f, err = os.Open("/etc/barkfetch.config")
-	if err == nil {
-		goto configChosed
+	var content []byte
+	for _, configPath := range configCommonPaths {
+		f, err := os.ReadFile(configPath)
+		if err == nil {
+			content = f
+			goto configChoosed
+		}
 	}
 
 	return map[string]string{}, ErrConfigNotFound
 
-configChosed:
-	defer f.Close()
-
-	raw, err := io.ReadAll(f)
-	if err != nil {
-		return map[string]string{}, err
-	}
-
-	contents := string(raw)
+configChoosed:
+	contents := string(content)
 	config := parseConfig(contents)
 
 	if isFlagPassed("logo") {
@@ -147,17 +132,13 @@ func parseConfig(config string) map[string]string {
 	options := make(map[string]string)
 
 	for _, line := range strings.Split(config, "\n") {
-		if len(line) == 0 {
-			continue
-		}
-
-		if line[0] == '#' {
+		if len(line) == 0 || line[0] == '#' {
 			continue
 		}
 
 		kv := strings.Split(line, "=")
 
-		if len(kv) < 2 || len(kv) > 2 {
+		if len(kv) != 2 {
 			continue
 		}
 
