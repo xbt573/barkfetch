@@ -36,11 +36,7 @@ func GetInfoString(options map[string]string) string {
 
 	for _, possibleOption := range possibleOptions {
 		value, exists := options[possibleOption]
-		if !exists {
-			continue
-		}
-
-		if value == "false" {
+		if !exists || value == "false" {
 			continue
 		}
 
@@ -50,9 +46,8 @@ func GetInfoString(options map[string]string) string {
 
 			output += os.Expand(logo.Logo, ColorExpand) +
 				strings.Repeat("\x1b[F", logo.Lines-1)
-			offset = logo.MaxLength + 2
+			offset, logolines = logo.MaxLength+2, logo.Lines
 			Colors["caccent"] = Colors[logo.AccentColor]
-			logolines = logo.Lines
 
 		case "userline":
 			username := getRawUser()
@@ -107,26 +102,20 @@ func GetInfoString(options map[string]string) string {
 					"\x1b[%vG${caccent}Uptime:${creset}: n/a\n",
 					offset,
 				)
-			}
-
-			if uptime > 0 && uptime <= 60 {
+			} else if uptime > 0 && uptime <= 60 {
 				output += formatAndColor(
 					"\x1b[%vG${caccent}Uptime${creset}: %v s\n",
 					offset,
 					int(uptime),
 				)
-			}
-
-			if uptime > 60 && uptime <= 3600 {
+			} else if uptime > 60 && uptime <= 3600 {
 				output += formatAndColor(
 					"\x1b[%vG${caccent}Uptime${creset}: %v m, %v s\n",
 					offset,
 					int(uptime/60),
 					int(uptime%60),
 				)
-			}
-
-			if uptime > 3600 && uptime <= 86400 {
+			} else if uptime > 3600 && uptime <= 86400 {
 				output += formatAndColor(
 					"\x1b[%vG${caccent}Uptime${creset}: %v h, %v m, %v s\n",
 					offset,
@@ -134,9 +123,7 @@ func GetInfoString(options map[string]string) string {
 					int((uptime%3600)/60),
 					int((uptime%3600)%60),
 				)
-			}
-
-			if uptime > 86400 {
+			} else if uptime > 86400 {
 				output += formatAndColor(
 					"\x1b[%vG${caccent}Uptime${creset}: %v d, %v h, %v m, %v s\n",
 					offset,
@@ -145,7 +132,7 @@ func GetInfoString(options map[string]string) string {
 					int(((uptime%86400)%3600)/60),
 					int(((uptime%86400)%3600)%60),
 				)
-			}
+			} // turned into one block cuz uptime not changing lol
 
 			lines++
 

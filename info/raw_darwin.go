@@ -45,11 +45,8 @@ func getRawUptime() int64 {
 	}
 
 	match := extractBoottimeRegex.FindStringSubmatch(string(out))
-	if len(match) == 0 {
-		return -1
-	}
 	seconds, err := strconv.ParseInt(match[1], 10, 64)
-	if err != nil {
+	if len(match) == 0 || err != nil {
 		return -1
 	}
 
@@ -81,34 +78,24 @@ func getRawMemory() (used, total int) {
 	}
 
 	match := extractWiredMemoryRegex.FindStringSubmatch(string(vmStat))
-	if len(match) == 0 {
-		return
-	}
 	wired, err := strconv.ParseInt(match[1], 10, 64)
-	if err != nil {
+	if len(match) == 0 || err != nil {
 		return
 	}
 
 	match = extractActiveMemoryRegex.FindStringSubmatch(string(vmStat))
-	if len(match) == 0 {
-		return
-	}
 	active, err := strconv.ParseInt(match[1], 10, 64)
-	if err != nil {
+	if len(match) == 0 || err != nil {
 		return
 	}
 
 	match = extractCompressedMemoryRegex.FindStringSubmatch(string(vmStat))
-	if len(match) == 0 {
-		return
-	}
 	compressed, err := strconv.ParseInt(match[1], 10, 64)
-	if err != nil {
+	if len(match) == 0 || err != nil {
 		return
 	}
 
-	total = int(totalMemory / 1000000)
-	used = int((wired + active + compressed) * 4 / 1024)
+	total, used = int(totalMemory/1000000), int((wired+active+compressed)*4/1024)
 
 	return
 }
@@ -126,13 +113,11 @@ func getRawCpu() string {
 // Returns GPU manufacturer and model
 func getRawGpus() []string {
 	out, err := exec.Command("system_profiler", "SPDisplaysDataType").Output()
-	if err != nil {
-		return []string{}
-	}
 
 	contents := string(out)
 	match := extractChipsetModelRegex.FindStringSubmatch(contents)
-	if len(match) == 0 {
+
+	if err != nil || len(match) == 0 {
 		return []string{}
 	}
 	return []string{match[1]}
@@ -141,13 +126,10 @@ func getRawGpus() []string {
 // Returns main screen resolution
 func getRawScreenResolutions() []string {
 	out, err := exec.Command("system_profiler", "SPDisplaysDataType").Output()
-	if err != nil {
-		return []string{}
-	}
 
 	contents := string(out)
 	match := extractResolutionRegex.FindStringSubmatch(contents)
-	if len(match) == 0 {
+	if err != nil || len(match) == 0 {
 		return []string{}
 	}
 
